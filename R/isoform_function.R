@@ -75,3 +75,44 @@ relative_isoform_abundance = function(isoform_expression_table, isoform_grl,
     rowRanges = isoform_gr_flat)
   
 }
+
+#' Combine the expression values of isoforms to get overall expression of their associated genes
+#' 
+#' @param isoform_expression_table A table where rows are isoforms and columns are samples. Row names should be the names of isoforms. 
+#' @param gene_to_isoform_list A list of vectors where the name of each list entry is a gene name and its elements are the names of isoforms.
+#' Can alternatively be a GRangeList where the name of each list element is a gene and the names of the individual ranges are isoforms.
+#' @return A data.frame with the sum of isoform expression values for genes where rows are genes and columns are samples
+#' @export
+sum_isoform_values <- function(isoform_expression_table, gene_to_isoform_list){
+  
+  # Check that inputs have the correct data type
+  stopifnot(is(isoform_expression_table, "data.frame") | is(isoform_expression_table, "matrix"), 
+    is(gene_to_isoform_list, "list"), all(sapply(gene_to_isoform_list, function(x) is(x, "character"))))
+  
+  # If gene_to_isoform_list is a GRangesList, extract a list of vectors matching genes to isoforms
+  if(is(gene_to_isoform_list, "GRangesList")){
+    gene_to_isoform_list <- lapply(gene_to_isoform_list, names)
+  }
+  
+  # Get the sum of the expression values for all isoforms associated with each gene in each sample
+  `%do%` <- foreach::`%do%`
+  results_list <- foreach::foreach(gene_isoforms = gene_to_isoform_list) %do% {
+    
+    # Sum the isoform values for each isoform associated with a gene
+    gene_results <- colSums(isoform_expression_table[gene_isoforms, ], na.rm = TRUE)
+    
+    # Samples where all values for gene_isoforms are NA are given a value of NA for the gene. 
+    # This is done as colSums returns a value of 0 if all values in a column are NA and na.rm <- TRUE.  
+    gene_results[apply(isoform_expression_table[gene_isoforms, ], 2, function(x) all(is.na(x)))] <- NA
+    gene_results
+  }
+  
+  # Set names for results_list
+  names(results_list) <- names(gene_to_isoform_list)
+  
+  # Turn results_list into a data.frame
+  results_table <- data.frame(dplyr::bind_rows(results_list, .id = "gene_name"))
+  
+  # Set gene names as row.names and return
+  return(tibble::column_to_rownames(results_table, "gene_name"))
+}

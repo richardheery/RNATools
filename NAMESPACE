@@ -3,6 +3,7 @@
 export(bam_coverage)
 export(index_bams)
 export(kallisto_quantify)
+export(relative_isoform_abundance)
 export(salmon_quantify)
 export(samtools_fastq)
 export(sort_bams)

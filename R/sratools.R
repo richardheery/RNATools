@@ -24,7 +24,7 @@ sra_prefetch = function(path_to_sratk, srr_accessions, output_directory = ".", p
   # Create cluster if parallel_files greater than 1
   cl = parallel::makeCluster(parallel_files)
   doParallel::registerDoParallel(cl, parallel_files)
-  `%do%` = foreach::`%do%`
+  `%dopar%` = foreach::`%do%`
   `%dopar%` = foreach::`%dopar%`
   
   foreach::foreach(accession = srr_accessions) %dopar% {
@@ -32,7 +32,7 @@ sra_prefetch = function(path_to_sratk, srr_accessions, output_directory = ".", p
   }
 }
 
-#' Download SRA files with prefetch
+#' Extract SRA files with FASTQ dump
 #'
 #' @param path_to_sratk Path to SRA toolkit bin directory
 #' @param srr_directory_list A vector of sequence read accessions

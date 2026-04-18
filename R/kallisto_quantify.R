@@ -1,3 +1,43 @@
+#' Create an index file for running Kallisto
+#'
+#' @param path_to_kallisto Path to kallisto executable
+#' @param transcripts_fasta Path to a fasta file for the transcripts to be quantified.
+#' @param index_name Name to give the created index file. Default is "kallisto_index.idx".
+#' @return Invisibly returns TRUE. 
+#' @export
+#' @examples \dontrun{
+#' # Download transcripts FASTA from Gencode
+#' download.file("https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.transcripts.fa.gz")
+#' 
+#' # Locate the kallisto executable (provided that it is on the path)
+#' kallisto_path <- system2("which", args = "kallisto", stdout = TRUE)
+#' 
+#' # Create transcripts index for use with Kallisto
+#' methodical::kallistoIndex(kallisto_path, transcripts_fasta = "gencode.v44.transcripts.fa.gz")
+#' }
+kallistoIndex <- function(path_to_kallisto, transcripts_fasta, index_name = "kallisto_index.idx"){
+  
+  # Check that inputs have the correct data type
+  stopifnot(is(path_to_kallisto, "character"), is(transcripts_fasta, "character"),
+    is(index_name, "character"))
+  
+  # Get the canonical path to kallisto
+  path_to_kallisto <- normalizePath(path_to_kallisto)
+  
+  # Check if kallisto can be executed from the given path
+  if(suppressWarnings(system2(command = path_to_kallisto, args = "version", stdout = NULL, stderr = NULL)) != 0){
+    stop("kallisto could can not be executed from given path")
+  }
+  
+  # Create the index
+  system2(command = path_to_kallisto,
+    args = paste("index -i", index_name, transcripts_fasta))
+  
+  # Invisibly return TRUE
+  invisible(return(TRUE))
+  
+}
+
 #' Run kallisto on a group of FASTQ files
 #'
 #' @param path_to_kallisto Path to kallisto executable
